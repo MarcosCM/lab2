@@ -10,8 +10,8 @@ var resultsBlock = null;
 $(document).ready(function() {
 	qTextInput = $('input#q');
 	resultsBlock = $("#resultsBlock");
-    // Create websocket
-    connectWebSocket();
+	// Create websocket
+	connectWebSocket();
 	registerSearch();
 });
 
@@ -33,23 +33,25 @@ function connectWebSocket() {
 }
 
 function subscribeTweetQuery(tweetQuery) {
-    console.log("TweetQuery: " + tweetQuery);
+	console.log("TweetQuery: " + tweetQuery);
 	// Unsubscribe previous query
 	if (subscription != null) subscription.unsubscribe();
 	// Subscribe new query
 	subscription = stompClient.subscribe(subscriptionEndpointPrefix+tweetQuery, function(tweet){
-		console.log('Received: ' + tweet);
-
-        tweet = JSON.parse(tweet.body);
+		// Convert int to string before parsing => avoid loss of accuracy
+		var pTweet = tweet.body.replace(/\"id\":(\d+)/g, function(s, match){
+			return "\"id\":\""+match+"\"";
+		});
+		pTweet = JSON.parse(pTweet);
 		var content = '';
 		content +='<div class="row panel panel-default">'
 				+ '<div class="panel-heading">'
-				+ '		<a href="https://twitter.com/'+ tweet.fromUser +'" target="_blank"><b>@'+ tweet.fromUser +'</b></a>'
+				+ '		<a href="https://twitter.com/'+ pTweet.fromUser +'" target="_blank"><b>@'+ pTweet.fromUser +'</b></a>'
 				+ '		<div class="pull-right">'
-				+ '			<a href="https://twitter.com/'+ tweet.fromUser +'/status/'+ tweet.idStr +'" target="_blank"><span class="glyphicon glyphicon-link"></span></a>'
+				+ '			<a href="https://twitter.com/'+ pTweet.fromUser +'/status/'+ pTweet.id +'" target="_blank"><span class="glyphicon glyphicon-link"></span></a>'
 				+ '		</div>'
 				+ '</div>'
-				+ '<div class="panel-body">'+ tweet.unmodifiedText +'</div>'
+				+ '<div class="panel-body">'+ pTweet.unmodifiedText +'</div>'
 				+ '</div>';
 		$("#resultsBlock").append(content);
 	}, function(error){
